@@ -16,7 +16,7 @@ namespace ConsoleApplication2
         #region declare
         private static string BaseUrl = "http://osialm12.orasi.com";
         private static string LoadUrl = "LoadTest/rest";
-        private static string Credentials = "";
+        private static string Credentials = "jon.fowler:Katie123";
         private static string CredentialsExample = "joe.doe:abc123";
 
         private static System.Net.Http.HttpClient HttpClient1;
