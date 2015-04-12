@@ -1,5 +1,12 @@
-﻿//PerformanceCounterCategory, help string, sample rate in seconds
-HP LoadRunner Performance, HP LoadRunner Performance Help, 5
+﻿//PerformanceCounterCategory, help string, sample rate in milliseconds
+RA LoadRunner, HP LoadRunner Performance Help, 5000
 
 //CounterName, Instance, type, help string, minimum, maximum, variance
-Transactions/Second, IMH IPMS Web Service, NumberOfItems32, Transactions/Second, 0, 100, 5
+Count, VUsers, NumberOfItems32, Count, 0, 100, 1
+Rate/Sec, Login, NumberOfItems32, Rate/Sec, 0, 100, 1
+Rate/Sec, Update Profile, NumberOfItems32, Rate/Sec, 0, 100, 1
+Rate/Sec, Search Catalog, NumberOfItems32, Rate/Sec, 0, 100, 1
+Rate/Sec, Browse Shopping Cart, NumberOfItems32, Rate/Sec, 0, 100, 1
+Rate/Sec, Checkout, NumberOfItems32, Rate/Sec, 0, 100, 1
+Rate/Sec, Logout, NumberOfItems32, Rate/Sec, 0, 100, 1
+

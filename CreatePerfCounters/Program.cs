@@ -17,14 +17,35 @@ namespace CreatePerfCounters
 
         static void Main(string[] args)
         {
+            string action = "read";
             if(args.Length > 0)
             {
-                counterFile = args[0];
+                if (args.Length == 2)
+                {
+                    if (args[0].ToLower() == "delete")
+                    {
+                        action = "delete";
+                        counterFile = args[1];
+                    }
+                }
+                else
+                {
+                    counterFile = args[0];
+                }
             }
-            random = new Random(DateTime.Now.Millisecond);
-            ReadCounterFile(counterFile);
-            CreatePerformanceCounterCategory();
-            AddPerformanceCounterInstances();
+            switch(action.ToLower())
+            {
+                case "read":
+                    random = new Random(DateTime.Now.Millisecond);
+                    ReadCounterFile(counterFile);
+                    CreatePerformanceCounterCategory();
+                    AddPerformanceCounterInstances();
+                    break;
+                case "delete":
+                    ReadCounterFile(counterFile);
+                    DeletePerformanceCounterCategory();
+                    break;
+            }
         }
 
         private static void ReadCounterFile(string counterFile)
@@ -92,13 +113,20 @@ namespace CreatePerfCounters
                         Console.WriteLine("{0}\t{1}\t{2}\t{3}", DateTime.Now, myCounter.CounterName, counterInstance, myCounter.RawValue);
                     }
 
-                    System.Threading.Thread.Sleep(performanceCounterCategoryRate * 1000);
+                    System.Threading.Thread.Sleep(performanceCounterCategoryRate);
                 }
             }
         }
 
         private static void SetNextCounterValue(PerformanceCounter myCounter, int minValue, int maxValue, int variance)
         {
+            if(myCounter.CounterType == PerformanceCounterType.RateOfCountsPerSecond32 ||
+                myCounter.CounterType == PerformanceCounterType.RateOfCountsPerSecond64)
+            {
+                myCounter.IncrementBy(10);
+                return;
+            }
+
             long lastValue = myCounter.RawValue;
             long newValue = 0;
             long adjustAmount;
@@ -126,7 +154,18 @@ namespace CreatePerfCounters
                     break;
                 }
             }
-            myCounter.IncrementBy(adjustAmount);
+            switch(myCounter.CounterType)
+            {
+                case PerformanceCounterType.NumberOfItems32:
+                case PerformanceCounterType.NumberOfItems64:
+                    myCounter.IncrementBy(adjustAmount);
+                    break;
+                case PerformanceCounterType.RateOfCountsPerSecond32:
+                case PerformanceCounterType.RateOfCountsPerSecond64:
+                    //myCounter.IncrementBy(newValue);
+                    myCounter.RawValue = newValue;
+                    break;
+            }
             //myCounter.RawValue = newValue;
 
         }
@@ -155,18 +194,41 @@ namespace CreatePerfCounters
             }
 
         }
+        static void DeletePerformanceCounterCategory()
+        {
+            if (PerformanceCounterCategory.Exists(performanceCounterCategoryName))
+            {
+                Console.WriteLine("Removing Performance Category: {0}", performanceCounterCategoryName);
+                PerformanceCounterCategory.Delete(performanceCounterCategoryName);
+                Console.WriteLine("Removed Performance Category: {0}", performanceCounterCategoryName);
+            }
+            else
+            {
+                Console.WriteLine("Performance Category to remove not found: {0}", performanceCounterCategoryName);
+            }
+        }
 
         private static PerformanceCounterType GetPerformanceCounterType(string performanceCounterType)
         {
-            if (performanceCounterType == "NumberOfItems64")
+            switch (performanceCounterType.ToLower())
             {
-                return PerformanceCounterType.NumberOfItems64;
+                case "numberofitems32":
+                case "count":
+                    return PerformanceCounterType.NumberOfItems32;
+                case "numberofitems64":
+                    return PerformanceCounterType.NumberOfItems64;
+                case "rateofcountspersecond32":
+                case "rate/sec":
+                    return PerformanceCounterType.RateOfCountsPerSecond32;
+                case "rateofcountspersecond64":
+                    return PerformanceCounterType.RateOfCountsPerSecond64;
+                case "averagetimer":
+                case "average":
+                    return PerformanceCounterType.AverageTimer32;
+                default:
+                    throw new Exception(string.Format("Counter name : \"{0}\" not understood. Please use \"Count\", \"Rate/Sec\", or \"Average\".", performanceCounterType));
             }
-            if (performanceCounterType == "NumberOfItems32")
-            {
-                return PerformanceCounterType.NumberOfItems32;
-            }
-            return PerformanceCounterType.NumberOfItems64;
         }
+
     }
 }
